@@ -1,11 +1,17 @@
-import { Button } from './ui/button';
+import { useState } from 'react';
+
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { DogMatcherModal } from './DogMatcherModal';
+import { Button } from './ui/button';
 
 export function HeroSection() {
+  const [matcherOpen, setMatcherOpen] = useState(false);
+
   return (
-    <section id="home" className="relative bg-gradient-to-b from-amber-50/50 to-white py-24 lg:py-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <>
+      <section id="home" className="relative bg-gradient-to-b from-amber-50/50 to-white py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text Content */}
           <div className="space-y-8 max-w-xl">
             <div className="space-y-6">
@@ -18,11 +24,14 @@ export function HeroSection() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-8 h-12 shadow-sm">
+              <Button
+                onClick={() => setMatcherOpen(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-8 h-12 shadow-sm"
+              >
                 Підібрати породу
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-2 border-stone-300 text-stone-700 hover:bg-stone-50 hover:border-stone-400 rounded-full px-8 h-12"
               >
                 Каталог порід
@@ -40,8 +49,11 @@ export function HeroSection() {
               />
             </div>
           </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <DogMatcherModal open={matcherOpen} onOpenChange={setMatcherOpen} />
+    </>
   );
 }
