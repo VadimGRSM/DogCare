@@ -1,12 +1,17 @@
 "use client";
 
 import * as React from "react";
-import * as RechartsPrimitive from "recharts@2.15.2";
+import * as RechartsPrimitive from "recharts";
 
 import { cn } from "./utils";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
+
+type TooltipPayload = NonNullable<RechartsPrimitive.TooltipProps["payload"]>;
+type TooltipPayloadItem = TooltipPayload[number];
+type LegendPayload = NonNullable<RechartsPrimitive.LegendProps["payload"]>;
+type LegendPayloadItem = LegendPayload[number];
 
 export type ChartConfig = {
   [k in string]: {
@@ -168,7 +173,8 @@ function ChartTooltipContent({
     return null;
   }
 
-  const nestLabel = payload.length === 1 && indicator !== "dot";
+  const items = payload as TooltipPayloadItem[];
+  const nestLabel = items.length === 1 && indicator !== "dot";
 
   return (
     <div
@@ -179,10 +185,11 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload.map((item, index) => {
+        {items.map((item, index) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color || item.payload.fill || item.color;
+          const payloadData = item.payload as { fill?: string } | undefined;
+          const indicatorColor = color || payloadData?.fill || item.color;
 
           return (
             <div
@@ -193,7 +200,13 @@ function ChartTooltipContent({
               )}
             >
               {formatter && item?.value !== undefined && item.name ? (
-                formatter(item.value, item.name, item, index, item.payload)
+                formatter(
+                  item.value,
+                  item.name,
+                  item,
+                  index,
+                  item.payload,
+                )
               ) : (
                 <>
                   {itemConfig?.icon ? (
@@ -229,14 +242,16 @@ function ChartTooltipContent({
                     <div className="grid gap-1.5">
                       {nestLabel ? tooltipLabel : null}
                       <span className="text-muted-foreground">
-                        {itemConfig?.label || item.name}
-                      </span>
-                    </div>
-                    {item.value && (
-                      <span className="text-foreground font-mono font-medium tabular-nums">
-                        {item.value.toLocaleString()}
-                      </span>
-                    )}
+                    {itemConfig?.label || item.name}
+                  </span>
+                </div>
+                {item.value !== undefined && item.value !== null && (
+                  <span className="text-foreground font-mono font-medium tabular-nums">
+                    {typeof item.value === "number"
+                      ? item.value.toLocaleString()
+                      : item.value}
+                  </span>
+                )}
                   </div>
                 </>
               )}
@@ -267,6 +282,8 @@ function ChartLegendContent({
     return null;
   }
 
+  const items = payload as LegendPayloadItem[];
+
   return (
     <div
       className={cn(
@@ -275,7 +292,7 @@ function ChartLegendContent({
         className,
       )}
     >
-      {payload.map((item) => {
+      {items.map((item) => {
         const key = `${nameKey || item.dataKey || "value"}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
