@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import { useEffect, useState } from 'react';
+import { Loader2, PiggyBank } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { Progress } from './ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Slider } from './ui/slider';
-import { Checkbox } from './ui/checkbox';
-import { Progress } from './ui/progress';
-import { Badge } from './ui/badge';
-import { X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { cn } from './ui/utils';
 
 interface CostCalculatorModalProps {
   open: boolean;
@@ -112,57 +114,62 @@ export function CostCalculatorModal({ open, onOpenChange }: CostCalculatorModalP
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset after animation
+    setIsCalculating(false);
     setTimeout(() => {
       setHasCalculated(false);
       setErrors({});
     }, 300);
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-
-    if (open) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+    } else {
+      handleClose();
     }
-  }, [open]);
+  };
 
-  const FormContent = () => (
-    <div className="space-y-6">
-      {/* Form Fields Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="md:col-span-2 space-y-3">
-          <Label htmlFor="weight">Вага собаки</Label>
-          <div className="space-y-4">
-            <Slider
-              id="weight"
-              min={5}
-              max={50}
-              step={1}
-              value={weight}
-              onValueChange={setWeight}
-              className="w-full [&_[data-slot=slider-range]]:bg-amber-600 [&_[data-slot=slider-thumb]]:border-amber-600"
-            />
-            <div className="flex justify-between items-center flex-wrap gap-2">
-              <span className="text-stone-900">{weight[0]} кг</span>
-              <span className="text-stone-500">≈ споживання корму залежить від ваги</span>
-            </div>
+  const renderFields = () => (
+    <div className="rounded-2xl border border-stone-200 bg-white/80 p-5 sm:p-6 shadow-sm space-y-6">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <Label htmlFor="weight" className="text-sm font-medium text-stone-900">
+              Вага собаки
+            </Label>
+            <p className="text-sm text-stone-500">Задайте орієнтовну вагу улюбленця</p>
           </div>
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
+            {weight[0]} кг
+          </span>
         </div>
+        <Slider
+          id="weight"
+          min={5}
+          max={50}
+          step={1}
+          value={weight}
+          onValueChange={setWeight}
+          className="w-full [&_[data-slot=slider-range]]:bg-amber-600 [&_[data-slot=slider-thumb]]:border-2 [&_[data-slot=slider-thumb]]:border-amber-600 [&_[data-slot=slider-thumb]]:bg-white"
+        />
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500">
+          <span>Оптимальний раціон залежить від ваги</span>
+          <span>Можна змінювати у будь-який момент</span>
+        </div>
+      </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="foodType">
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="foodType" className="text-sm font-medium text-stone-900">
             Тип корму <span className="text-red-500">*</span>
           </Label>
           <Select value={foodType} onValueChange={setFoodType}>
-            <SelectTrigger 
+            <SelectTrigger
               id="foodType"
-              className={`rounded-xl ${errors.foodType ? 'border-red-500' : ''}`}
+              className={cn(
+                'rounded-xl border-2 border-stone-200 bg-white focus-visible:border-amber-500 focus-visible:ring-amber-200',
+                errors.foodType && 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200',
+              )}
             >
               <SelectValue placeholder="Оберіть тип" />
             </SelectTrigger>
@@ -173,18 +180,21 @@ export function CostCalculatorModal({ open, onOpenChange }: CostCalculatorModalP
             </SelectContent>
           </Select>
           {errors.foodType && (
-            <p className="text-red-600">{errors.foodType}</p>
+            <p className="text-sm text-red-600">{errors.foodType}</p>
           )}
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="grooming">
+        <div className="space-y-2">
+          <Label htmlFor="grooming" className="text-sm font-medium text-stone-900">
             Частота грумінгу <span className="text-red-500">*</span>
           </Label>
           <Select value={grooming} onValueChange={setGrooming}>
-            <SelectTrigger 
+            <SelectTrigger
               id="grooming"
-              className={`rounded-xl ${errors.grooming ? 'border-red-500' : ''}`}
+              className={cn(
+                'rounded-xl border-2 border-stone-200 bg-white focus-visible:border-amber-500 focus-visible:ring-amber-200',
+                errors.grooming && 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200',
+              )}
             >
               <SelectValue placeholder="Оберіть частоту" />
             </SelectTrigger>
@@ -195,18 +205,21 @@ export function CostCalculatorModal({ open, onOpenChange }: CostCalculatorModalP
             </SelectContent>
           </Select>
           {errors.grooming && (
-            <p className="text-red-600">{errors.grooming}</p>
+            <p className="text-sm text-red-600">{errors.grooming}</p>
           )}
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="vetCare">
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="vetCare" className="text-sm font-medium text-stone-900">
             Ветеринарні витрати <span className="text-red-500">*</span>
           </Label>
           <Select value={vetCare} onValueChange={setVetCare}>
-            <SelectTrigger 
+            <SelectTrigger
               id="vetCare"
-              className={`rounded-xl ${errors.vetCare ? 'border-red-500' : ''}`}
+              className={cn(
+                'rounded-xl border-2 border-stone-200 bg-white focus-visible:border-amber-500 focus-visible:ring-amber-200',
+                errors.vetCare && 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200',
+              )}
             >
               <SelectValue placeholder="Оберіть рівень" />
             </SelectTrigger>
@@ -217,136 +230,198 @@ export function CostCalculatorModal({ open, onOpenChange }: CostCalculatorModalP
             </SelectContent>
           </Select>
           {errors.vetCare && (
-            <p className="text-red-600">{errors.vetCare}</p>
+            <p className="text-sm text-red-600">{errors.vetCare}</p>
           )}
-        </div>
-
-        <div className="md:col-span-2 flex items-start space-x-3 p-4 rounded-xl bg-stone-50 border border-stone-200">
-          <Checkbox 
-            id="reserve" 
-            checked={includeReserve}
-            onCheckedChange={(checked) => setIncludeReserve(checked as boolean)}
-            className="mt-1"
-          />
-          <div>
-            <Label htmlFor="reserve" className="cursor-pointer">
-              Додати резерв
-            </Label>
-            <p className="text-stone-500 mt-1">Страхування та непередбачувані витрати</p>
-          </div>
         </div>
       </div>
 
-      {/* Results Card */}
-      {hasCalculated && (
-        <div className={`rounded-2xl bg-gradient-to-br from-amber-50 to-stone-50 p-6 border border-amber-200 space-y-4 ${isCalculating ? 'opacity-50' : ''}`}>
-          <div className="space-y-3">
-            <div>
-              <p className="text-stone-600 mb-1">Щомісячно:</p>
-              <p className="text-stone-900">{monthlyTotal.toLocaleString()} ₴</p>
-            </div>
-            <div>
-              <p className="text-stone-600">Річна оцінка: {yearlyTotal.toLocaleString()} ₴</p>
-            </div>
+      <div className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-stone-50/80 p-4">
+        <Checkbox
+          id="reserve"
+          checked={includeReserve}
+          onCheckedChange={(checked) => setIncludeReserve(checked as boolean)}
+          className="mt-1"
+        />
+        <div>
+          <Label htmlFor="reserve" className="cursor-pointer text-sm font-medium text-stone-900">
+            Додати резерв на непередбачувані витрати
+          </Label>
+          <p className="text-sm text-stone-500">
+            Рекомендуємо відкладати кошти на страхування, вакцинацію чи форс-мажори
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const SummaryCard = ({ className }: { className?: string }) => (
+    <div
+      className={cn(
+        'rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-stone-50 p-6 sm:p-7 shadow-[0_20px_45px_-20px_rgba(217,119,6,0.35)] transition-opacity duration-200',
+        isCalculating && 'opacity-60',
+        className,
+      )}
+    >
+      {hasCalculated ? (
+        <div className="space-y-5">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+              Щомісячні витрати
+            </p>
+            <p className="text-3xl font-semibold text-stone-900">
+              {monthlyTotal.toLocaleString()} ₴
+            </p>
+            <p className="text-sm text-stone-600">
+              Річна оцінка: {yearlyTotal.toLocaleString()} ₴
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-stone-700">Час на догляд</span>
-              <span className="text-stone-900">1-3 год/день</span>
+          <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-stone-600">Час на догляд</span>
+              <span className="font-medium text-stone-900">1-3 год/день</span>
             </div>
-            <Progress value={60} className="h-2 bg-amber-100 [&_[data-slot=progress-indicator]]:bg-amber-600" />
+            <Progress value={60} className="mt-3 h-2 bg-amber-100 [&_[data-slot=progress-indicator]]:bg-amber-600" />
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-white border-amber-200">
+            <Badge variant="secondary" className="rounded-full border border-amber-200 bg-white/90 text-stone-700">
               Корм: {breakdown.food} ₴
             </Badge>
-            <Badge variant="secondary" className="bg-white border-amber-200">
+            <Badge variant="secondary" className="rounded-full border border-amber-200 bg-white/90 text-stone-700">
               Грумінг: {breakdown.grooming} ₴
             </Badge>
-            <Badge variant="secondary" className="bg-white border-amber-200">
-              Вет-резерв: {breakdown.vet} ₴
+            <Badge variant="secondary" className="rounded-full border border-amber-200 bg-white/90 text-stone-700">
+              Ветеринарія: {breakdown.vet} ₴
             </Badge>
             {breakdown.other > 0 && (
-              <Badge variant="secondary" className="bg-white border-amber-200">
-                Інше: {breakdown.other} ₴
+              <Badge variant="secondary" className="rounded-full border border-amber-200 bg-white/90 text-stone-700">
+                Резерв: {breakdown.other} ₴
               </Badge>
             )}
           </div>
 
-          <p className="text-stone-500 pt-2 border-t border-amber-200">
-            Це орієнтовні витрати. Реальні суми можуть відрізнятися.
+          <p className="text-xs leading-relaxed text-stone-500">
+            Це орієнтовні показники. Фактичні витрати залежать від стану здоров’я, раціону та регіону проживання.
           </p>
         </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
+              <PiggyBank className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-stone-900">Персональний прогноз витрат</p>
+              <p className="text-sm text-stone-600">Заповніть форму, щоб побачити детальний розрахунок</p>
+            </div>
+          </div>
+          <ul className="space-y-2 text-sm text-stone-600">
+            <li className="flex items-start gap-2">
+              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>Розбиття бюджету на корм, грумінг, ветеринарію та резерв</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>Рекомендації щодо часу на догляд протягом тижня</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>Нагадування про плановий резерв для непередбачуваних витрат</span>
+            </li>
+          </ul>
+        </div>
       )}
+    </div>
+  );
 
-      {/* Action Buttons */}
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleClose}
-          className="flex-1 sm:flex-none rounded-full border-2 border-stone-300 hover:bg-stone-50"
-        >
-          Скасувати
-        </Button>
-        <Button
-          type="button"
-          onClick={calculateCosts}
-          disabled={isCalculating}
-          className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-sm"
-        >
-          {isCalculating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Розраховуємо...
-            </>
-          ) : (
-            'Розрахувати'
-          )}
-        </Button>
-      </div>
+  const ActionButtons = () => (
+    <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleClose}
+        className="flex-1 rounded-full border-2 border-stone-300 text-stone-700 transition-colors hover:bg-stone-100 sm:flex-none"
+      >
+        Скасувати
+      </Button>
+      <Button
+        type="button"
+        onClick={calculateCosts}
+        disabled={isCalculating}
+        className="flex-1 rounded-full bg-amber-600 text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-80 sm:flex-none"
+      >
+        {isCalculating ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Розраховуємо...
+          </span>
+        ) : (
+          'Розрахувати'
+        )}
+      </Button>
     </div>
   );
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={handleClose}>
-        <SheetContent 
-          side="bottom" 
-          className="rounded-t-3xl px-4 sm:px-6 max-h-[90vh] overflow-y-auto"
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[90vh] overflow-y-auto rounded-t-3xl px-0 pb-10 pt-6 sm:pt-8 [&_[data-slot=sheet-close]]:right-6 [&_[data-slot=sheet-close]]:top-6 [&_[data-slot=sheet-close]]:rounded-full [&_[data-slot=sheet-close]]:bg-white [&_[data-slot=sheet-close]]:shadow-sm [&_[data-slot=sheet-close]:hover]:bg-stone-100"
         >
-          <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-6 mt-2" />
-          <SheetHeader className="text-left mb-6">
-            <SheetTitle className="text-stone-900">Калькулятор витрат</SheetTitle>
-            <SheetDescription className="text-stone-600">
-              Розрахуйте щомісячні та річні витрати на утримання собаки
-            </SheetDescription>
-          </SheetHeader>
-          <FormContent />
+          <div className="px-4 sm:px-6">
+            <div className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-stone-300" />
+            <SheetHeader className="mb-6 text-left">
+              <SheetTitle className="text-xl font-semibold text-stone-900">
+                Калькулятор витрат
+              </SheetTitle>
+              <SheetDescription className="text-sm text-stone-600">
+                Розрахуйте щомісячні та річні витрати на утримання собаки
+              </SheetDescription>
+            </SheetHeader>
+            <div className="space-y-8 pb-2">
+              {renderFields()}
+              <SummaryCard />
+              <ActionButtons />
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl">
-        <button
-          onClick={handleClose}
-          className="absolute right-4 top-4 rounded-full p-2 hover:bg-stone-100 transition-colors"
-        >
-          <X className="h-4 w-4 text-stone-500" />
-          <span className="sr-only">Закрити</span>
-        </button>
-        <DialogHeader className="mb-6">
-          <DialogTitle className="text-stone-900">Калькулятор витрат</DialogTitle>
-          <DialogDescription className="text-stone-600">
-            Розрахуйте щомісячні та річні витрати на утримання собаки
-          </DialogDescription>
-        </DialogHeader>
-        <FormContent />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-4xl overflow-hidden rounded-3xl border border-stone-200 p-0 shadow-xl [&_[data-slot=dialog-close]]:right-6 [&_[data-slot=dialog-close]]:top-6 [&_[data-slot=dialog-close]]:rounded-full [&_[data-slot=dialog-close]]:bg-white [&_[data-slot=dialog-close]]:shadow-sm [&_[data-slot=dialog-close]:hover]:bg-stone-100"
+      >
+        <div className="flex flex-col">
+          <div className="border-b border-stone-100 bg-gradient-to-r from-amber-50/60 to-transparent px-6 py-6 sm:px-10">
+            <DialogHeader className="text-left">
+              <DialogTitle className="text-2xl font-semibold text-stone-900">
+                Калькулятор витрат
+              </DialogTitle>
+              <DialogDescription className="text-sm text-stone-600">
+                Заповніть параметри утримання собаки та отримайте персональний прогноз витрат
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="px-6 pb-8 pt-6 sm:px-10 sm:pt-8">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="space-y-8">
+                {renderFields()}
+                <ActionButtons />
+              </div>
+              <div className="hidden lg:block">
+                <SummaryCard className="sticky top-6" />
+              </div>
+            </div>
+            <div className="mt-8 lg:hidden">
+              <SummaryCard />
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
